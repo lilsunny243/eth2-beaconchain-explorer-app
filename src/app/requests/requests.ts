@@ -183,6 +183,7 @@ export interface ValidatorResponse {
 	performance365d: BigNumber
 	performance7d: BigNumber
 	rank7d: number
+	performancetotal: BigNumber
 }
 
 export interface AttestationPerformanceResponse {
@@ -196,6 +197,25 @@ export interface SyncCommitteeResponse {
 	period: number
 	start_epoch: number
 	validators: number[]
+}
+
+export interface SyncCommitteesStatistics {
+	committeesParticipated: number
+	committeesExpected: number
+	slotsPerSyncCommittee: number
+	slotsLeftInSyncCommittee: number
+	slotsParticipated: number
+	slotsMissed: number
+	slotsScheduled: number
+	efficiency: number
+	luck: number
+}
+
+export interface SyncCommitteesStatisticsResponse {
+	expectedSlots: number
+	participatedSlots: number
+	missedSlots: number
+	scheduledSlots: number
 }
 
 export interface EpochResponse {
@@ -237,6 +257,7 @@ export interface DashboardResponse {
 	rocketpool_network_stats: RocketPoolNetworkStats[]
 	current_sync_committee: SyncCommitteeResponse[]
 	next_sync_committee: SyncCommitteeResponse[]
+	sync_committees_stats: SyncCommitteesStatisticsResponse
 }
 
 export interface RocketPoolNetworkStats {
@@ -270,6 +291,12 @@ export interface RocketPoolResponse {
 	claimed_smoothing_pool: string
 	smoothing_pool_opted_in: boolean
 	penalty_count: number
+	user_deposit_balance: BigNumber
+	node_refund_balance: BigNumber
+	node_deposit_balance: BigNumber
+	node_deposit_credit: BigNumber
+	is_vacant: boolean
+	version: number
 }
 
 export interface ExecutionResponse {
@@ -515,7 +542,7 @@ export class NotificationGetRequest extends APIRequest<NotificationGetResponse> 
 	}
 
 	parse(response: Response): NotificationGetResponse[] {
-		if (!response || !response.data || !response.data.data) return null
+		if (!response || !response.data || !response.data.data) return []
 		return response.data.data as NotificationGetResponse[]
 	}
 }
@@ -674,7 +701,7 @@ export class GithubReleaseRequest extends APIRequest<GithubReleaseResponse> {
 		headers: {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			'User-Agent': 'Beaconcha.in Dashboard',
+			'User-Agent': 'beaconcha.in Dashboard',
 		},
 	}
 

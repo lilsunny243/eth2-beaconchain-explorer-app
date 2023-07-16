@@ -92,12 +92,16 @@ export class DashboardComponent implements OnInit {
 	smoothingClaimed: BigNumber
 	smoothingUnclaimed: BigNumber
 	unclaimedRpl: BigNumber
+	totalRplEarned: BigNumber
 	hasNonSmoothingPoolAsWell: boolean
 
 	currentSyncCommitteeMessage: SyncCommitteeMessage = null
 	nextSyncCommitteeMessage: SyncCommitteeMessage = null
 
 	notificationPermissionPending = false
+	depositCreditText = null
+	vacantMinipoolText = null
+	showWithdrawalInfo = false
 
 	constructor(
 		public unit: UnitconvService,
@@ -159,6 +163,9 @@ export class DashboardComponent implements OnInit {
 					this.updateSmoothingPool(),
 					this.updateActiveSyncCommitteeMessage(this.data.currentSyncCommittee),
 					this.updateNextSyncCommitteeMessage(this.data.nextSyncCommittee),
+					this.updateDepositCreditText(),
+					this.updateVacantMinipoolText(),
+					this.updateWithdrawalInfo(),
 				])
 
 				console.log('dashboard data', this.data)
@@ -173,6 +180,35 @@ export class DashboardComponent implements OnInit {
 					this.fadeIn = null
 				}, 1000)
 			}
+		}
+	}
+
+	async updateWithdrawalInfo() {
+		this.storage.getBooleanSetting('withdrawal_info_dismissed', false).then((result) => {
+			this.showWithdrawalInfo = !this.data.withdrawalsEnabledForAll && !result
+		})
+	}
+
+	async updateDepositCreditText() {
+		if (this.data.rocketpool.depositCredit && this.data.rocketpool.depositCredit.gt(0)) {
+			this.depositCreditText = `You have ${this.unit.convert(
+				this.data.rocketpool.depositCredit,
+				'WEI',
+				'ETHER',
+				true
+			)} in unused Rocketpool deposit credit.<br/><br/>You can use this credit to spin up more minipools. Be aware that you can not withdraw your deposit credit.`
+		}
+	}
+
+	async updateVacantMinipoolText() {
+		if (this.data.rocketpool.vacantPools && this.data.rocketpool.vacantPools > 0) {
+			this.vacantMinipoolText = `${this.data.rocketpool.vacantPools} of your ${
+				this.data.rocketpool.vacantPools == 1 ? 'minipool is' : 'minipools are'
+			}
+			currently vacant. Head over to the validators tab to see which one has a vacant label.<br/><br/>
+			If you recently converted a validator to a minipool please make sure you did change the 0x0 withdrawal credentials to the new vacant minipool address (0x01) to fix this warning.<br/><br/>
+			If you already changed the withdrawal credentials this warning will disappear on it's own within 24h.
+			`
 		}
 	}
 
@@ -226,6 +262,7 @@ export class DashboardComponent implements OnInit {
 			this.smoothingClaimed = this.data.rocketpool.smoothingPoolClaimed.dividedBy(new BigNumber('1e9'))
 			this.smoothingUnclaimed = this.data.rocketpool.smoothingPoolUnclaimed.dividedBy(new BigNumber('1e9'))
 			this.unclaimedRpl = this.data.rocketpool.rplUnclaimed
+			this.totalRplEarned = this.data.rocketpool.totalClaims.plus(this.data.rocketpool.rplUnclaimed)
 		} catch (e) {
 			console.warn('cannot update smoothing pool', e)
 		}
